@@ -44,7 +44,7 @@ jobs:
         run: |
           mkdir -p output
           cd output
-          { printf 'n\nn\n%s\n' "$ANDROID_HOME"; yes ""; } | bubblewrap init \
+          { printf 'n\n%s\nn\n%s\n' "$JAVA_HOME" "$ANDROID_HOME"; yes ""; } | bubblewrap init \
             --manifest http://localhost:8080/manifest.json \
             --directory . || true
 
@@ -54,7 +54,7 @@ jobs:
           ANDROID_HOME: /usr/local/lib/android/sdk
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: |
-          { printf 'n\nn\n%s\n' "$ANDROID_HOME"; yes ""; } | bubblewrap build --skipPwaValidation
+          { printf 'n\n%s\nn\n%s\n' "$JAVA_HOME" "$ANDROID_HOME"; yes ""; } | bubblewrap build --skipPwaValidation
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
