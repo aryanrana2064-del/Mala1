@@ -1,0 +1,48 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install PWABuilder CLI
+        run: npm install -g @pwabuilder/pwabuilder
+
+      - name: Serve PWA locally
+        run: |
+          npm install -g http-server
+          nohup http-server . -p 8080 --silent &
+          sleep 5
+
+      - name: Build Android APK with PWABuilder
+        run: |
+          pwabuilder http://localhost:8080/manifest.json \
+            -p android \
+            -o ./output \
+            --packageId com.mala.verse \
+            --name "MalaVerse"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: malaverse-apk
+          path: |
+            ./output/**/*.apk
+            ./output/**/*.aab
+          if-no-files-found: warn
+          retention-days: 30
+
