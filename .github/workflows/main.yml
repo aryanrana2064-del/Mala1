@@ -14,13 +14,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: "20"
 
-      - name: Install PWABuilder CLI
-        run: npm install -g @pwabuilder/pwabuilder
+      - name: Install Bubblewrap CLI
+        run: npm install -g @bubblewrap/cli
 
       - name: Serve PWA locally
         run: |
@@ -28,13 +37,24 @@ jobs:
           nohup http-server . -p 8080 --silent &
           sleep 5
 
-      - name: Build Android APK with PWABuilder
+      - name: Initialize TWA (Android) project
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: |
-          pwabuilder http://localhost:8080/manifest.json \
-            -p android \
-            -o ./output \
-            --packageId com.mala.verse \
-            --name "MalaVerse"
+          mkdir -p output
+          cd output
+          yes "" | bubblewrap init \
+            --manifest http://localhost:8080/manifest.json \
+            --directory . \
+            --packageId com.mala.verse || true
+
+      - name: Build APK
+        working-directory: ./output
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+        run: bubblewrap build --skipPwaValidation
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -45,4 +65,3 @@ jobs:
             ./output/**/*.aab
           if-no-files-found: warn
           retention-days: 30
-
